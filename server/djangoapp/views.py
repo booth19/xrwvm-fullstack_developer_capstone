@@ -13,7 +13,9 @@ from django.contrib.auth import login, authenticate
 import logging
 import json
 from django.views.decorators.csrf import csrf_exempt
-# from .populate import initiate
+from .models import CarMake, CarModel
+
+from .populate import initiate
 
 
 # Get an instance of a logger
@@ -41,12 +43,31 @@ def login_user(request):
 # Create a `logout_request` view to handle sign out request
 # def logout_request(request):
 # ...
+@csrf_exempt
+def logout_request(request):
+    logout(request)
+    return JsonResponse({"status": "Logged out"})
+
 
 # Create a `registration` view to handle sign up request
 # @csrf_exempt
 # def registration(request):
 # ...
+@csrf_exempt
+def registration(request):
+    data = json.loads(request.body)
+    username = data['userName']
+    password = data['password']
 
+    # Check if user already exists
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({"status": "User already exists"})
+
+    # Create user
+    user = User.objects.create_user(username=username, password=password)
+    user.save()
+
+    return JsonResponse({"status": "User created", "userName": username})
 # # Update the `get_dealerships` view to render the index page with
 # a list of dealerships
 # def get_dealerships(request):
@@ -63,3 +84,13 @@ def login_user(request):
 # Create a `add_review` view to submit a review
 # def add_review(request):
 # ...
+def get_cars(request):
+    count = CarMake.objects.filter().count()
+    print(count)
+    if(count == 0):
+        initiate()
+    car_models = CarModel.objects.select_related('car_make')
+    cars = []
+    for car_model in car_models:
+        cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
+    return JsonResponse({"CarModels":cars})

@@ -1,11 +1,57 @@
 # Uncomment the following imports before adding the Model code
 
-# from django.db import models
-# from django.utils.timezone import now
-# from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from django.utils.timezone import now
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 # Create your models here.
+class CarMake(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    # You can add more fields if needed, such as:
+    country = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return self.name
+
+class CarModel(models.Model):
+    # Many-to-one relationship: one CarMake → many CarModels
+    car_make = models.ForeignKey(CarMake, on_delete=models.CASCADE)
+
+    # Basic fields
+    name = models.CharField(max_length=100)
+    dealer_id = models.IntegerField(default=1)  # Refers to Cloudant dealership ID
+
+    # Car type choices
+    CAR_TYPES = [
+        ('SEDAN', 'Sedan'),
+        ('SUV', 'SUV'),
+        ('WAGON', 'Wagon'),
+        ('TRUCK', 'Truck'),
+        ('SPORTS', 'Sports'),
+    ]
+
+    type = models.CharField(
+        max_length=10,
+        choices=CAR_TYPES,
+        default='SUV'
+    )
+
+    # Year with validation
+    year = models.IntegerField(
+        validators=[
+            MinValueValidator(2015),
+            MaxValueValidator(2023)
+        ],
+        default=2023
+    )
+
+    # Optional fields you may want
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.car_make.name} {self.name} ({self.year})"
 
 # <HINT> Create a Car Make model `class CarMake(models.Model)`:
 # - Name
